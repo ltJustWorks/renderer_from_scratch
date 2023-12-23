@@ -1,22 +1,7 @@
 use minifb::{Window, WindowOptions};
-use tgaimage::{TGAImage, TGAColor, TGAColorRGBA};
+use tgaimage::{TGAImage, TGAColor};
 
-fn convert_buf(image: &TGAImage) -> Vec<u32> {
-    let mut buffer: Vec<u32> = Vec::new();
-
-    for y in 0..image.height() {
-        for x in 0..image.width() {
-            let rgba: TGAColorRGBA = match image.get(x, y) {
-                TGAColor::Rgb(rgb) => TGAColorRGBA{r: rgb.r, g: rgb.g, b: rgb.b, a: 255},
-                TGAColor::Rgba(rgba) => rgba,
-            };
-            let pixel_value = ((rgba.a as u32) << 24) | ((rgba.r as u32) << 16) | ((rgba.g as u32) << 8) | (rgba.b as u32);
-            buffer.push(pixel_value);
-        }
-    }
-
-    buffer
-}
+mod image_processing;
 
 fn main() {
     let white = TGAColor::rgba(255, 255, 255, 255);
@@ -34,7 +19,7 @@ fn main() {
     // Create a window matching the image dimensions
     let mut window = Window::new("View", width, height, WindowOptions::default()).expect("unable to open window");
 
-    let mut buffer: Vec<u32> = convert_buf(&image);
+    let mut buffer: Vec<u32> = image_processing::convert_buf(&image);
 
     // Display the image in the window
     while window.is_open() {
