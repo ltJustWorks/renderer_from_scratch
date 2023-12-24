@@ -1,5 +1,7 @@
 use tgaimage::{TGAImage, TGAColor};
 
+use crate::point::Point2D;
+
 pub fn draw(image: &mut TGAImage, color: &TGAColor, x0: i32, x1: i32, y0: i32, y1: i32) {
     let mut x = x0;
     let mut y = y0;
@@ -23,4 +25,8 @@ pub fn draw(image: &mut TGAImage, color: &TGAColor, x0: i32, x1: i32, y0: i32, y
             y += y_inc;
         }
     }
+}
+
+pub fn draw_from_points(image: &mut TGAImage, color: &TGAColor, p1: &Point2D, p2: &Point2D) {
+    draw(image, color, p1.x, p2.x, p1.y, p2.y);
 }
