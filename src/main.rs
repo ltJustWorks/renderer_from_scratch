@@ -22,12 +22,8 @@ fn main() {
 
     //draw_model(width, height, &mut image, &white);
     
-    let t0 = [Point2D::new(10, 70),   Point2D::new(50, 160),  Point2D::new(70, 80)]; 
-    let t1 = [Point2D::new(180, 50),   Point2D::new(150, 1),  Point2D::new(70, 180)]; 
-    let t2 = [Point2D::new(180, 150),   Point2D::new(120, 160),  Point2D::new(130, 180)]; 
-    triangle::draw(&mut image, &red, &(t0[0]), &(t0[1]), &(t0[2])); 
-    triangle::draw(&mut image, &white, &(t1[0]), &(t1[1]), &(t1[2])); 
-    triangle::draw(&mut image, &green, &(t2[0]), &(t2[1]), &(t2[2])); 
+    let t = [Point2D::new(10, 10),   Point2D::new(100, 30),  Point2D::new(190, 160)]; 
+    triangle::draw(&mut image, &red, &t); 
 
     image.flip_vertically();
     //image.write_tga_file("output.tga", false);
