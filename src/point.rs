@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::ops::Index;
 
 pub struct Point2D {
     pub x: i32,
@@ -19,7 +20,25 @@ pub struct Vec3f {
     pub z: f32,
 }
 
-pub fn barycentric(pts: &[Point2D; 3], p: &Point2D) -> Vec3f {
+impl Index<usize> for Vec3f {
+    type Output = f32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Index out of bounds for Vec3f"),
+        }
+    }
+}
+
+pub struct Vec2f {
+    pub x: f32,
+    pub y: f32,
+}
+
+pub fn barycentric(pts: &[Vec3f; 3], p: &Vec3f) -> Vec3f {
     let u = Vec3f {
         x: (pts[2].x - pts[0].x) as f32,
         y: (pts[1].x - pts[0].x) as f32,

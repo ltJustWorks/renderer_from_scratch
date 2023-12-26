@@ -1,5 +1,7 @@
 use std::{io::{self, BufRead}, fs::File};
 
+use crate::point::Vec3f;
+
 pub struct Vertex {
     pub x: f32,
     pub y: f32,
@@ -11,7 +13,7 @@ pub struct Face {
 }
 
 pub struct Model {
-    pub vertices: Vec<Vertex>,
+    pub vertices: Vec<Vec3f>,
     pub faces: Vec<Face>,
 }
 
@@ -19,7 +21,7 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
     let file = File::open(file_path)?;
     let reader = io::BufReader::new(file);
 
-    let mut vertices: Vec<Vertex> = Vec::new();
+    let mut vertices: Vec<Vec3f> = Vec::new();
     let mut faces: Vec<Face> = Vec::new();
 
     for line in reader.lines() {
@@ -36,7 +38,7 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
                     let x: f32 = tokens[1].parse().unwrap();
                     let y: f32 = tokens[2].parse().unwrap();
                     let z: f32 = tokens[3].parse().unwrap();
-                    vertices.push(Vertex { x, y, z });
+                    vertices.push(Vec3f { x, y, z });
                 }
                 "f" => {
                     let mut face = Face {

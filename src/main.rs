@@ -37,26 +37,31 @@ fn main() {
     }
 }
 
+fn world_to_screen(v: &Vec3f, width: usize, height: usize) -> Vec3f {
+    Vec3f {
+        x: (v.x + 1.0)*(width as f32)/2.0 + 0.5,
+        y: (v.y + 1.0)*(height as f32)/2.0 + 0.5,
+        z: v.z,
+    }
+}
+
 fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
     let model = wavefront::read_obj_file("src/obj/african_head.obj").unwrap();
     let mut rng = rand::thread_rng();
     let light_dir = Vec3f {x:0.0, y:0.0, z:-1.0};
+    let mut zbuffer = vec![0.0; width*height];
 
     for i in 0..model.faces.len() {
         let face = &model.faces[i];
 
-        let mut screen_coords = [Point2D { x: 0, y: 0 }, Point2D { x: 0, y: 0 }, Point2D { x: 0, y: 0 }];
-        let mut world_coords = [Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0}];
+        let mut world_coords = [&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0}];
+        let mut screen_coords = [Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0}];
 
         for j in 0..3 {
-            let v = &model.vertices[face.vertices[j]]; // Assuming model has a method vert(i) that returns Vec3f
-            let x = ((v.x + 1.0) * width as f32 / 2.0) as i32; // Assuming width and height are known
-            let y = ((v.y + 1.0) * height as f32 / 2.0) as i32; // and represent the screen size
-
-            screen_coords[j] = Point2D { x, y };
-            world_coords[j].x = v.x; 
-            world_coords[j].y = v.y; 
-            world_coords[j].z = v.z; 
+            world_coords[j] = &model.vertices[face.vertices[j]];
+        }
+        for j in 0..3 {
+            screen_coords[j] = world_to_screen(&world_coords[j], width, height);
         }
 
         let mut n = world_coords[2]
@@ -67,13 +72,13 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
 
         if intensity > 0.0 {
             let color = TGAColor::rgba(
+                0,
                 (intensity*255.0) as u8,
-                (intensity*255.0) as u8,
-                (intensity*255.0) as u8,
+                0,
                 255, // Assuming alpha is 255 for opaque color
             );
 
-            triangle::draw(image, &color, &screen_coords);
+            triangle::draw(image, &mut zbuffer, &color, &screen_coords);
         }
     }
 }
