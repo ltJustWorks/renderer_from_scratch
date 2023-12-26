@@ -42,16 +42,37 @@ pub fn barycentric(pts: &[Point2D; 3], p: &Point2D) -> Vec3f {
     }
 }
 
-trait CrossProduct {
-    fn cross_product(self, other: Self) -> Self;
-}
+impl Vec3f {
+    pub fn subtract(&self, other: &Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
 
-impl CrossProduct for Vec3f {
-    fn cross_product(self, other: Self) -> Self {
+    pub fn cross_product(&self, other: Self) -> Self {
         Self {
             x: self.y * other.z - self.z * other.y,
             y: self.z * other.x - self.x * other.z,
             z: self.x * other.y - self.y * other.x,
+        }
+    }
+
+    pub fn dot_product(&self, other: &Self) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    pub fn length(&self) -> f32 {
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
+
+    pub fn normalize(&mut self) {
+        let len = self.length();
+        if len != 0.0 {
+            self.x /= len;
+            self.y /= len;
+            self.z /= len;
         }
     }
 }

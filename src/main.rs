@@ -1,5 +1,5 @@
 use minifb::{Window, WindowOptions};
-use point::Point2D;
+use point::{Point2D, Vec3f};
 use tgaimage::{TGAImage, TGAColor, TGAColorRGBA};
 use rand::Rng;
 
@@ -40,28 +40,40 @@ fn main() {
 fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
     let model = wavefront::read_obj_file("src/obj/african_head.obj").unwrap();
     let mut rng = rand::thread_rng();
+    let light_dir = Vec3f {x:0.0, y:0.0, z:-1.0};
 
     for i in 0..model.faces.len() {
         let face = &model.faces[i];
 
         let mut screen_coords = [Point2D { x: 0, y: 0 }, Point2D { x: 0, y: 0 }, Point2D { x: 0, y: 0 }];
+        let mut world_coords = [Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0}];
 
         for j in 0..3 {
-            let world_coords = &model.vertices[face.vertices[j]]; // Assuming model has a method vert(i) that returns Vec3f
-            let x = ((world_coords.x + 1.0) * width as f32 / 2.0) as i32; // Assuming width and height are known
-            let y = ((world_coords.y + 1.0) * height as f32 / 2.0) as i32; // and represent the screen size
+            let v = &model.vertices[face.vertices[j]]; // Assuming model has a method vert(i) that returns Vec3f
+            let x = ((v.x + 1.0) * width as f32 / 2.0) as i32; // Assuming width and height are known
+            let y = ((v.y + 1.0) * height as f32 / 2.0) as i32; // and represent the screen size
 
             screen_coords[j] = Point2D { x, y };
+            world_coords[j].x = v.x; 
+            world_coords[j].y = v.y; 
+            world_coords[j].z = v.z; 
         }
 
-        let color = TGAColor::rgba(
-            rand::thread_rng().gen_range(0..=255),
-            rand::thread_rng().gen_range(0..=255),
-            rand::thread_rng().gen_range(0..=255),
-            255, // Assuming alpha is 255 for opaque color
-        );
+        let mut n = world_coords[2]
+            .subtract(&world_coords[0])
+            .cross_product(world_coords[1].subtract(&world_coords[0]));
+        n.normalize();
+        let intensity = n.dot_product(&light_dir);
 
-        triangle::draw(image, &color, &screen_coords);
+        if intensity > 0.0 {
+            let color = TGAColor::rgba(
+                (intensity*255.0) as u8,
+                (intensity*255.0) as u8,
+                (intensity*255.0) as u8,
+                255, // Assuming alpha is 255 for opaque color
+            );
 
+            triangle::draw(image, &color, &screen_coords);
+        }
     }
 }
