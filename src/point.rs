@@ -20,31 +20,38 @@ pub struct Vec3f {
 }
 
 pub fn barycentric(pts: &[Point2D; 3], p: &Point2D) -> Vec3f {
-    let v0 = Point2D::new(
-        pts[1].x - pts[0].x,
-        pts[1].y - pts[0].y,
-    );
-    let v1 = Point2D::new(
-        pts[2].x - pts[0].x,
-        pts[2].y - pts[0].y,
-    );
-    let v2 = Point2D::new(
-        p.x - pts[0].x,
-        p.y - pts[0].y,
-    );
+    let u = Vec3f {
+        x: (pts[2].x - pts[0].x) as f32,
+        y: (pts[1].x - pts[0].x) as f32,
+        z: (pts[0].x - p.x) as f32,
+    } 
+    .cross_product(Vec3f {
+        x: (pts[2].y - pts[0].y) as f32,
+        y: (pts[1].y - pts[0].y) as f32,
+        z: (pts[0].y - p.y) as f32,
+    });
 
-    let d00 = v0.x * v0.x + v0.y * v0.y;
-    let d01 = v0.x * v1.x + v0.y * v1.y;
-    let d11 = v1.x * v1.x + v1.y * v1.y;
-    let d20 = v2.x * v0.x + v2.y * v0.y;
-    let d21 = v2.x * v1.x + v2.y * v1.y;
+    if u.z.abs() < 1.0 {
+        return Vec3f { x: -1.0, y: 1.0, z: 1.0 };
+    }
 
-    let denom = d00 * d11 - d01 * d01;
+    Vec3f {
+        x: 1.0 - (u.x + u.y) / u.z,
+        y: u.y / u.z,
+        z: u.x / u.z,
+    }
+}
 
-    let v = (d11 * d20 - d01 * d21) as f32 / denom as f32;
-    let w = (d00 * d21 - d01 * d20) as f32 / denom as f32;
-    let u = 1.0 - v - w;
+trait CrossProduct {
+    fn cross_product(self, other: Self) -> Self;
+}
 
-    if denom.abs() < 1 {return Vec3f {x:-1.0, y:1.0, z:1.0};}
-    Vec3f { x: u, y: v, z: w }
+impl CrossProduct for Vec3f {
+    fn cross_product(self, other: Self) -> Self {
+        Self {
+            x: self.y * other.z - self.z * other.y,
+            y: self.z * other.x - self.x * other.z,
+            z: self.x * other.y - self.y * other.x,
+        }
+    }
 }
