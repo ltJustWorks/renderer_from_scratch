@@ -71,14 +71,10 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
             tex_coords[j] = &model.textures[face.textures[j]-1];
         }
 
-        let mut n = world_coords[2]
-            .subtract(&world_coords[0])
-            .cross_product(world_coords[1].subtract(&world_coords[0]));
-        n.normalize();
-        let intensity = n.dot_product(&light_dir);
 
-        if intensity > 0.0 {
-            triangle::draw(image, &mut zbuffer, &texture, tex_coords, &screen_coords, intensity);
+        if true /*fix this */ {
+            triangle::draw(image, &mut zbuffer, &texture, tex_coords, world_coords, &screen_coords, &light_dir);
         }
     }
 }
+

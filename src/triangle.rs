@@ -4,7 +4,7 @@ use tgaimage::{TGAImage, TGAColor, TGAColorRGB};
 
 use crate::{point::{Point2D, Vec3f, barycentric, Vec2f}, line, wavefront::{interpolate_tex_coord, sample_texture}};
 
-pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_coords: [&Vec2f; 3], pts: &[Vec3f; 3], intensity: f32) {
+pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_coords: [&Vec2f; 3], world_coords: [&Vec3f; 3], pts: &[Vec3f; 3], light_dir: &Vec3f) {
     let mut bboxmin = Point2D {
         x: (image.width() - 1) as i32,
         y: (image.height() - 1) as i32,
@@ -21,6 +21,33 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_c
 
         bboxmax.x = std::cmp::min(clamp.x, std::cmp::max(bboxmax.x, pts[i].x as i32));
         bboxmax.y = std::cmp::min(clamp.y, std::cmp::max(bboxmax.y, pts[i].y as i32));
+    }
+
+    let normal = calculate_normal(world_coords);
+
+    let intensities = [
+        calculate_intensity(&world_coords[0], &normal, &light_dir),
+        calculate_intensity(&world_coords[1], &normal, &light_dir),
+        calculate_intensity(&world_coords[2], &normal, &light_dir)
+    ];
+
+    // Calculate colors at each vertex
+    let mut colors = [TGAColor::rgb(0, 0, 0); 3]; // Placeholder for vertex colors
+    for i in 0..3 {
+        // Calculate color based on intensity and assign to colors array
+        colors[i] = match texture.get(tex_coords[i].x as usize, tex_coords[i].y as usize) {
+            TGAColor::Rgb(rgb) => TGAColor::rgb(
+                ((rgb.r as f32) * intensities[i]) as u8,
+                ((rgb.g as f32) * intensities[i]) as u8,
+                ((rgb.b as f32) * intensities[i]) as u8,
+            ),
+            TGAColor::Rgba(rgba) => TGAColor::rgba(
+                ((rgba.r as f32) * intensities[i]) as u8,
+                ((rgba.g as f32) * intensities[i]) as u8,
+                ((rgba.b as f32) * intensities[i]) as u8,
+                255,
+            ),
+        };
     }
 
     println!("{} {} {} {}", bboxmin.x, bboxmin.y, bboxmax.x, bboxmax.y);
@@ -45,23 +72,28 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_c
             if zbuffer[index] < p.z {
                 let interpolated_tex_coord = interpolate_tex_coord(tex_coords, bc_screen);
                 let color = sample_texture(texture, &interpolated_tex_coord);
-                let color = match color {
-                    TGAColor::Rgb(rgb) => TGAColor::rgb(
-                        ((rgb.r as f32)*intensity) as u8,
-                        ((rgb.g as f32)*intensity) as u8,
-                        ((rgb.b as f32)*intensity) as u8,
-                    ), 
-                    TGAColor::Rgba(rgba) => TGAColor::rgba(
-                        ((rgba.r as f32)*intensity) as u8,
-                        ((rgba.g as f32)*intensity) as u8,
-                        ((rgba.b as f32)*intensity) as u8,
-                        255
-                    ), 
-  
-                };
                 zbuffer[index] = p.z;
                 image.set(p.x as usize, p.y as usize, &color);
             }
         }
     }
+}
+
+fn calculate_intensity(vertex: &Vec3f, normal: &Vec3f, light_dir: &Vec3f) -> f32 {
+    let normalized_light_dir = light_dir.normalize();
+    let normalized_normal = normal.normalize();
+
+    let intensity = normalized_light_dir.dot_product(&normalized_normal).max(0.0);
+    intensity
+}
+
+fn calculate_normal(pts: [&Vec3f; 3]) -> Vec3f {
+    let edge1 = pts[1].subtract(&pts[0]);
+    let edge2 = pts[2].subtract(&pts[0]);
+
+    // Calculate the cross product of edge1 and edge2 to get the normal vector
+    let normal = edge1.cross_product(edge2);
+
+    // Return the normalized normal vector
+    normal.normalize()
 }
