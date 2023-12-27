@@ -70,7 +70,13 @@ fn calculate_intensity(vertex: &Vec3f, normal: &Vec3f, light_dir: &Vec3f) -> f32
     let normalized_light_dir = light_dir.normalize();
     let normalized_normal = normal.normalize();
 
-    let intensity = normalized_light_dir.dot_product(&normalized_normal);
+    let dir_to_vertex = Vec3f{
+        x: vertex.x - light_dir.x, 
+        y: vertex.y - light_dir.y,
+        z: vertex.z - light_dir.z + 1.0, // TODO: fix
+    }.normalize();
+
+    let intensity = normalized_light_dir.dot_product(&normalized_normal) * dir_to_vertex.dot_product(&normalized_normal);
     intensity.max(0.0)
 }
 

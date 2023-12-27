@@ -51,7 +51,7 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
     texture.flip_vertically();
 
     let mut rng = rand::thread_rng();
-    let light_dir = Vec3f {x:0.0, y:0.0, z:-1.0};
+    let light_dir = Vec3f {x:0.0, y:0.0, z:1.0};
     let mut zbuffer = vec![0.0; width*height];
 
     for i in 0..model.faces.len() {
