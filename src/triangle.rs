@@ -31,25 +31,6 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_c
         calculate_intensity(&world_coords[2], &normal, &light_dir)
     ];
 
-    // Calculate colors at each vertex
-    let mut colors = [TGAColor::rgb(0, 0, 0); 3]; // Placeholder for vertex colors
-    for i in 0..3 {
-        // Calculate color based on intensity and assign to colors array
-        colors[i] = match texture.get(tex_coords[i].x as usize, tex_coords[i].y as usize) {
-            TGAColor::Rgb(rgb) => TGAColor::rgb(
-                ((rgb.r as f32) * intensities[i]) as u8,
-                ((rgb.g as f32) * intensities[i]) as u8,
-                ((rgb.b as f32) * intensities[i]) as u8,
-            ),
-            TGAColor::Rgba(rgba) => TGAColor::rgba(
-                ((rgba.r as f32) * intensities[i]) as u8,
-                ((rgba.g as f32) * intensities[i]) as u8,
-                ((rgba.b as f32) * intensities[i]) as u8,
-                255,
-            ),
-        };
-    }
-
     println!("{} {} {} {}", bboxmin.x, bboxmin.y, bboxmax.x, bboxmax.y);
 
     let mut p = Vec3f { x: 0.0, y: 0.0, z: 0.0 };
@@ -70,8 +51,10 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_c
 
             let index = (p.x + p.y * image.width() as f32) as usize;
             if zbuffer[index] < p.z {
-                let interpolated_tex_coord = interpolate_tex_coord(tex_coords, bc_screen);
-                let color = sample_texture(texture, &interpolated_tex_coord);
+                let interpolated_tex_coord = interpolate_tex_coord(tex_coords, &bc_screen);
+                let interpolated_intensity = interpolate_intensity(intensities, &bc_screen);
+                let color = sample_texture(texture, &interpolated_tex_coord, interpolated_intensity);
+
                 zbuffer[index] = p.z;
                 image.set(p.x as usize, p.y as usize, &color);
             }
@@ -84,6 +67,14 @@ fn calculate_intensity(vertex: &Vec3f, normal: &Vec3f, light_dir: &Vec3f) -> f32
     let normalized_normal = normal.normalize();
 
     let intensity = normalized_light_dir.dot_product(&normalized_normal).max(0.0);
+    intensity
+}
+
+fn interpolate_intensity(intensities: [f32; 3], bc_screen: &Vec3f) -> f32 {
+    let mut intensity = 0.0;
+    for i in 0..3 {
+        intensity += intensities[i] * bc_screen[i];
+    }
     intensity
 }
 

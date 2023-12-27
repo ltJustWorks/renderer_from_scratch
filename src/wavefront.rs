@@ -73,7 +73,7 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
     Ok(Model {vertices, faces, textures})
 }
 
-pub fn interpolate_tex_coord(tex_coords: [&Vec2f; 3], barycentric: Vec3f) -> Vec2f {
+pub fn interpolate_tex_coord(tex_coords: [&Vec2f; 3], barycentric: &Vec3f) -> Vec2f {
     let mut tex_coord = Vec2f {x: 0.0, y: 0.0};
     for i in 0..3 {
         tex_coord.x += tex_coords[i].x * barycentric[i];
@@ -82,7 +82,8 @@ pub fn interpolate_tex_coord(tex_coords: [&Vec2f; 3], barycentric: Vec3f) -> Vec
     tex_coord
 } 
 
-pub fn sample_texture(texture: &TGAImage, coord: &Vec2f) -> TGAColor {
+pub fn sample_texture(texture: &TGAImage, coord: &Vec2f, intensity: f32) -> TGAColor {
+    println!("{}", intensity);
     // Convert texture coordinates to pixel coordinates
     let width = texture.width();
     let height = texture.height();
@@ -94,7 +95,7 @@ pub fn sample_texture(texture: &TGAImage, coord: &Vec2f) -> TGAColor {
     let y = y.clamp(0, height - 1);
 
     match texture.get(x, y) {
-        TGAColor::Rgba(rgba) => TGAColor::Rgba(rgba),
-        TGAColor::Rgb(rgb) => TGAColor::rgba(rgb.r, rgb.g, rgb.b, 255)
+        TGAColor::Rgba(rgba) => TGAColor::rgba(((rgba.r as f32)*intensity) as u8, ((rgba.g as f32)*intensity) as u8, ((rgba.b as f32)*intensity) as u8, 255),
+        TGAColor::Rgb(rgb) => TGAColor::rgba(((rgb.r as f32)*intensity) as u8, ((rgb.g as f32)*intensity) as u8, ((rgb.b as f32)*intensity) as u8, 255),
     }
 }
