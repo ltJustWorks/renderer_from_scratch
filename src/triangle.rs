@@ -1,6 +1,6 @@
 use std::{mem::swap, f32::consts::E};
 
-use tgaimage::{TGAImage, TGAColor};
+use tgaimage::{TGAImage, TGAColor, TGAColorRGB};
 
 use crate::{point::{Point2D, Vec3f, barycentric, Vec2f}, line, wavefront::{interpolate_tex_coord, sample_texture}};
 
@@ -45,6 +45,20 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_c
             if zbuffer[index] < p.z {
                 let interpolated_tex_coord = interpolate_tex_coord(tex_coords, bc_screen);
                 let color = sample_texture(texture, &interpolated_tex_coord);
+                let color = match color {
+                    TGAColor::Rgb(rgb) => TGAColor::rgb(
+                        ((rgb.r as f32)*intensity) as u8,
+                        ((rgb.g as f32)*intensity) as u8,
+                        ((rgb.b as f32)*intensity) as u8,
+                    ), 
+                    TGAColor::Rgba(rgba) => TGAColor::rgba(
+                        ((rgba.r as f32)*intensity) as u8,
+                        ((rgba.g as f32)*intensity) as u8,
+                        ((rgba.b as f32)*intensity) as u8,
+                        255
+                    ), 
+  
+                };
                 zbuffer[index] = p.z;
                 image.set(p.x as usize, p.y as usize, &color);
             }

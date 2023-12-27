@@ -78,13 +78,6 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
         let intensity = n.dot_product(&light_dir);
 
         if intensity > 0.0 {
-            let color = TGAColor::rgba(
-                0,
-                (intensity*255.0) as u8,
-                0,
-                255, // Assuming alpha is 255 for opaque color
-            );
-
             triangle::draw(image, &mut zbuffer, &texture, tex_coords, &screen_coords, intensity);
         }
     }
