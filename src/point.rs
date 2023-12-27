@@ -86,12 +86,14 @@ impl Vec3f {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalize(&self) -> Self {
         let len = self.length();
         if len != 0.0 {
-            self.x /= len;
-            self.y /= len;
-            self.z /= len;
-        }
+            Self {
+                x: self.x / len,
+                y: self.y / len,
+                z: self.z / len,
+            }
+        } else {Self{x:self.x,y:self.y,z:self.z}}
     }
 }
