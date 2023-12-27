@@ -5,6 +5,17 @@ use tgaimage::{TGAImage, TGAColor, TGAColorRGB};
 use crate::{point::{Point2D, Vec3f, barycentric, Vec2f}, line, wavefront::{interpolate_tex_coord, sample_texture}};
 
 pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_coords: [&Vec2f; 3], world_coords: [&Vec3f; 3], pts: &[Vec3f; 3], light_dir: &Vec3f) {
+    let normal = calculate_normal(world_coords);
+
+    let intensities = [
+        calculate_intensity(&world_coords[0], &normal, &light_dir),
+        calculate_intensity(&world_coords[1], &normal, &light_dir),
+        calculate_intensity(&world_coords[2], &normal, &light_dir)
+    ];
+    for intensity in intensities {
+        if intensity <= 0.0 {return;}
+    }
+
     let mut bboxmin = Point2D {
         x: (image.width() - 1) as i32,
         y: (image.height() - 1) as i32,
@@ -23,15 +34,8 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_c
         bboxmax.y = std::cmp::min(clamp.y, std::cmp::max(bboxmax.y, pts[i].y as i32));
     }
 
-    let normal = calculate_normal(world_coords);
-
-    let intensities = [
-        calculate_intensity(&world_coords[0], &normal, &light_dir),
-        calculate_intensity(&world_coords[1], &normal, &light_dir),
-        calculate_intensity(&world_coords[2], &normal, &light_dir)
-    ];
-
-    println!("{} {} {} {}", bboxmin.x, bboxmin.y, bboxmax.x, bboxmax.y);
+    
+    println!("{} {} {}", intensities[0],intensities[1],intensities[2]);
 
     let mut p = Vec3f { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -66,8 +70,8 @@ fn calculate_intensity(vertex: &Vec3f, normal: &Vec3f, light_dir: &Vec3f) -> f32
     let normalized_light_dir = light_dir.normalize();
     let normalized_normal = normal.normalize();
 
-    let intensity = normalized_light_dir.dot_product(&normalized_normal).max(0.0);
-    intensity
+    let intensity = normalized_light_dir.dot_product(&normalized_normal);
+    intensity.max(0.0)
 }
 
 fn interpolate_intensity(intensities: [f32; 3], bc_screen: &Vec3f) -> f32 {

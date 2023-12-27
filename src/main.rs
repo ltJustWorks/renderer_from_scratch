@@ -71,7 +71,6 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
             tex_coords[j] = &model.textures[face.textures[j]-1];
         }
 
-
         if true /*fix this */ {
             triangle::draw(image, &mut zbuffer, &texture, tex_coords, world_coords, &screen_coords, &light_dir);
         }

@@ -83,7 +83,6 @@ pub fn interpolate_tex_coord(tex_coords: [&Vec2f; 3], barycentric: &Vec3f) -> Ve
 } 
 
 pub fn sample_texture(texture: &TGAImage, coord: &Vec2f, intensity: f32) -> TGAColor {
-    println!("{}", intensity);
     // Convert texture coordinates to pixel coordinates
     let width = texture.width();
     let height = texture.height();
