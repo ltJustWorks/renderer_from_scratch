@@ -2,9 +2,9 @@ use std::{mem::swap, f32::consts::E};
 
 use tgaimage::{TGAImage, TGAColor};
 
-use crate::{point::{Point2D, Vec3f, barycentric}, line};
+use crate::{point::{Point2D, Vec3f, barycentric, Vec2f}, line, wavefront::{interpolate_tex_coord, sample_texture}};
 
-pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], color: &TGAColor, pts: &[Vec3f; 3]) {
+pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], texture: &TGAImage, tex_coords: [&Vec2f; 3], pts: &[Vec3f; 3], intensity: f32) {
     let mut bboxmin = Point2D {
         x: (image.width() - 1) as i32,
         y: (image.height() - 1) as i32,
@@ -43,8 +43,10 @@ pub fn draw(image: &mut TGAImage, zbuffer: &mut [f32], color: &TGAColor, pts: &[
 
             let index = (p.x + p.y * image.width() as f32) as usize;
             if zbuffer[index] < p.z {
+                let interpolated_tex_coord = interpolate_tex_coord(tex_coords, bc_screen);
+                let color = sample_texture(texture, &interpolated_tex_coord);
                 zbuffer[index] = p.z;
-                image.set(p.x as usize, p.y as usize, color);
+                image.set(p.x as usize, p.y as usize, &color);
             }
         }
     }

@@ -1,5 +1,5 @@
 use minifb::{Window, WindowOptions};
-use point::{Point2D, Vec3f};
+use point::{Point2D, Vec3f, Vec2f};
 use tgaimage::{TGAImage, TGAColor, TGAColorRGBA};
 use rand::Rng;
 
@@ -47,6 +47,9 @@ fn world_to_screen(v: &Vec3f, width: usize, height: usize) -> Vec3f {
 
 fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
     let model = wavefront::read_obj_file("src/obj/african_head.obj").unwrap();
+    let mut texture = TGAImage::from_tga_file("src/textures/african_head_diffuse.tga");
+    texture.flip_vertically();
+
     let mut rng = rand::thread_rng();
     let light_dir = Vec3f {x:0.0, y:0.0, z:-1.0};
     let mut zbuffer = vec![0.0; width*height];
@@ -56,12 +59,16 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
 
         let mut world_coords = [&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0}];
         let mut screen_coords = [Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0},Vec3f {x: 0.0, y: 0.0, z: 0.0}];
+        let mut tex_coords = [
+            &Vec2f {x:0.0,y:0.0},
+            &Vec2f {x:0.0,y:0.0},
+            &Vec2f {x:0.0,y:0.0},
+        ];
 
         for j in 0..3 {
-            world_coords[j] = &model.vertices[face.vertices[j]];
-        }
-        for j in 0..3 {
+            world_coords[j] = &model.vertices[face.vertices[j]-1];
             screen_coords[j] = world_to_screen(&world_coords[j], width, height);
+            tex_coords[j] = &model.textures[face.textures[j]-1];
         }
 
         let mut n = world_coords[2]
@@ -78,7 +85,7 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
                 255, // Assuming alpha is 255 for opaque color
             );
 
-            triangle::draw(image, &mut zbuffer, &color, &screen_coords);
+            triangle::draw(image, &mut zbuffer, &texture, tex_coords, &screen_coords, intensity);
         }
     }
 }
