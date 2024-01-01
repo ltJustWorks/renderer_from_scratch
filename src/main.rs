@@ -51,7 +51,7 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
     texture.flip_vertically();
 
     let mut rng = rand::thread_rng();
-    let light_dir = Vec3f {x:0.0, y:0.0, z:1.0};
+    let light_dir = Vec3f {x:0.0, y:0.0, z:2.0};
     let mut zbuffer = vec![0.0; width*height];
 
     for i in 0..model.faces.len() {
@@ -64,15 +64,17 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
             &Vec2f {x:0.0,y:0.0},
             &Vec2f {x:0.0,y:0.0},
         ];
+        let mut normals = [&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0}];
 
         for j in 0..3 {
             world_coords[j] = &model.vertices[face.vertices[j]-1];
             screen_coords[j] = world_to_screen(&world_coords[j], width, height);
             tex_coords[j] = &model.textures[face.textures[j]-1];
+            normals[j] = &model.normals[face.normals[j]-1];
         }
 
         if true /*fix this */ {
-            triangle::draw(image, &mut zbuffer, &texture, tex_coords, world_coords, &screen_coords, &light_dir);
+            triangle::draw(image, &mut zbuffer, &texture, tex_coords, world_coords, &screen_coords, &light_dir, normals);
         }
     }
 }

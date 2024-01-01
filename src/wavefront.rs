@@ -13,12 +13,14 @@ pub struct Vertex {
 pub struct Face {
     pub vertices: Vec<usize>,
     pub textures: Vec<usize>,
+    pub normals: Vec<usize>,
 }
 
 pub struct Model {
     pub vertices: Vec<Vec3f>,
     pub faces: Vec<Face>,
     pub textures: Vec<Vec2f>,
+    pub normals: Vec<Vec3f>,
 }
 
 pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
@@ -28,6 +30,7 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
     let mut vertices: Vec<Vec3f> = Vec::new();
     let mut faces: Vec<Face> = Vec::new();
     let mut textures: Vec<Vec2f> = Vec::new();
+    let mut normals: Vec<Vec3f> = Vec::new();
 
     for line in reader.lines() {
         if let Ok(line) = line {
@@ -50,10 +53,23 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
                     let y: f32 = tokens[2].parse().unwrap();
                     textures.push(Vec2f { x, y });
                 },
+                "vn" => {
+                    if tokens.len() < 4 {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "Incomplete normal coordinates",
+                        ));
+                    }
+                    let x = tokens[1].parse().unwrap();
+                    let y = tokens[2].parse().unwrap();
+                    let z = tokens[3].parse().unwrap();
+                    normals.push(Vec3f { x, y, z });
+                }
                 "f" => {
                     let mut face = Face {
                         vertices: Vec::new(),
                         textures: Vec::new(),
+                        normals: Vec::new(),
                     };
 
                     for i in 1..tokens.len() {
@@ -61,6 +77,9 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
                         face.vertices.push(indices[0].parse().unwrap());
                         if indices.len() > 1 && !indices[1].is_empty() {
                             face.textures.push(indices[1].parse().unwrap());
+                        }
+                        if indices.len() > 2 && !indices[2].is_empty() {
+                            face.normals.push(indices[2].parse().unwrap());
                         }
                     }
                     faces.push(face);
@@ -70,7 +89,7 @@ pub fn read_obj_file(file_path: &str) -> Result<Model, io::Error> {
         }
     }
 
-    Ok(Model {vertices, faces, textures})
+    Ok(Model {vertices, faces, textures, normals})
 }
 
 pub fn interpolate_tex_coord(tex_coords: [&Vec2f; 3], barycentric: &Vec3f) -> Vec2f {
@@ -93,8 +112,15 @@ pub fn sample_texture(texture: &TGAImage, coord: &Vec2f, intensity: f32) -> TGAC
     let x = x.clamp(0, width - 1);
     let y = y.clamp(0, height - 1);
 
+    /*
     match texture.get(x, y) {
         TGAColor::Rgba(rgba) => TGAColor::rgba(((rgba.r as f32)*intensity) as u8, ((rgba.g as f32)*intensity) as u8, ((rgba.b as f32)*intensity) as u8, 255),
         TGAColor::Rgb(rgb) => TGAColor::rgba(((rgb.r as f32)*intensity) as u8, ((rgb.g as f32)*intensity) as u8, ((rgb.b as f32)*intensity) as u8, 255),
+    }
+    */
+
+    match texture.get(x, y) {
+        TGAColor::Rgba(rgba) => TGAColor::rgba(((0 as f32)*intensity) as u8, ((255 as f32)*intensity) as u8, ((0 as f32)*intensity) as u8, 255),
+        TGAColor::Rgb(rgb) => TGAColor::rgba(((0 as f32)*intensity) as u8, ((255 as f32)*intensity) as u8, ((0 as f32)*intensity) as u8, 255),
     }
 }
