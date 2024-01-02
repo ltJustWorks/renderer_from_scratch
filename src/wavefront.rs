@@ -112,15 +112,15 @@ pub fn sample_texture(texture: &TGAImage, coord: &Vec2f, intensity: f32) -> TGAC
     let x = x.clamp(0, width - 1);
     let y = y.clamp(0, height - 1);
 
-    /*
     match texture.get(x, y) {
         TGAColor::Rgba(rgba) => TGAColor::rgba(((rgba.r as f32)*intensity) as u8, ((rgba.g as f32)*intensity) as u8, ((rgba.b as f32)*intensity) as u8, 255),
         TGAColor::Rgb(rgb) => TGAColor::rgba(((rgb.r as f32)*intensity) as u8, ((rgb.g as f32)*intensity) as u8, ((rgb.b as f32)*intensity) as u8, 255),
     }
-    */
 
+    /*
     match texture.get(x, y) {
         TGAColor::Rgba(rgba) => TGAColor::rgba(((0 as f32)*intensity) as u8, ((255 as f32)*intensity) as u8, ((0 as f32)*intensity) as u8, 255),
         TGAColor::Rgb(rgb) => TGAColor::rgba(((0 as f32)*intensity) as u8, ((255 as f32)*intensity) as u8, ((0 as f32)*intensity) as u8, 255),
     }
+ */
 }

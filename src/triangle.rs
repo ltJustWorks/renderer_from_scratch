@@ -80,7 +80,7 @@ fn calculate_normal(pts: [&Vec3f; 3]) -> Vec3f {
     let edge2 = pts[2].subtract(&pts[0]);
 
     // Calculate the cross product of edge1 and edge2 to get the normal vector
-    let normal = edge1.cross_product(edge2);
+    let normal = edge1.cross_product(&edge2);
 
     // Return the normalized normal vector
     normal.normalize()

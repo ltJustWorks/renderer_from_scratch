@@ -1,5 +1,6 @@
 use minifb::{Window, WindowOptions};
-use point::{Point2D, Vec3f, Vec2f};
+use ndarray::{array, Array, arr1, Array2};
+use point::{Point2D, Vec3f, Vec2f, lookat, viewport};
 use tgaimage::{TGAImage, TGAColor, TGAColorRGBA};
 use rand::Rng;
 
@@ -17,11 +18,12 @@ fn main() {
     // TODO: Fix window w/h issue
     let width = 600;
     let height = 600;
+    let depth = 255;
 
     let mut image = TGAImage::new(width, height, 4);
     // do stuff here
 
-    draw_model(width, height, &mut image);
+    draw_model(width, height, depth, &mut image);
     
     image.flip_vertically();
     //image.write_tga_file("output.tga", false);
@@ -45,14 +47,22 @@ fn world_to_screen(v: &Vec3f, width: usize, height: usize) -> Vec3f {
     }
 }
 
-fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
+fn draw_model(width: usize, height: usize, depth: usize, image: &mut TGAImage) {
     let model = wavefront::read_obj_file("src/obj/african_head.obj").unwrap();
     let mut texture = TGAImage::from_tga_file("src/textures/african_head_diffuse.tga");
     texture.flip_vertically();
 
     let mut rng = rand::thread_rng();
-    let light_dir = Vec3f {x:0.0, y:0.0, z:2.0};
-    let mut zbuffer = vec![0.0; width*height];
+    let light_dir = Vec3f {x:0.0, y:0.0, z:1.0};
+    let mut zbuffer = vec![f32::MIN; width*height];
+
+    let eye = Vec3f {x: 1.0, y: 1.0, z: 3.0};
+    let center = Vec3f {x: 0.0, y: 0.0, z: 0.0};
+    let ModelView = lookat(&eye, &center, &Vec3f { x: 0.0, y: 1.0, z: 0.0 });
+    let mut Projection = Array2::eye(4);
+    Projection[[3,2]] = -1.0 / (eye.subtract(&center)).length();
+    let ViewPort = viewport((width/8) as i32, (height/8) as i32, (width*3/4) as i32, (height*3/4) as i32, depth as i32);
+    println!("{}", ViewPort);
 
     for i in 0..model.faces.len() {
         let face = &model.faces[i];
@@ -66,9 +76,28 @@ fn draw_model(width: usize, height: usize, image: &mut TGAImage) {
         ];
         let mut normals = [&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0},&Vec3f {x: 0.0, y: 0.0, z: 0.0}];
 
+
+
         for j in 0..3 {
-            world_coords[j] = &model.vertices[face.vertices[j]-1];
-            screen_coords[j] = world_to_screen(&world_coords[j], width, height);
+            let v = &model.vertices[face.vertices[j]-1];
+
+            //let mut v_mat = Array::from_diag(&arr1(&[v.x, v.y, v.z]));
+            let mut v_mat = Array2::eye(4);
+            v_mat[[0, 0]] = v.x;
+            v_mat[[1, 1]] = v.y;
+            v_mat[[2, 2]] = v.z;
+            v_mat = ViewPort.dot(&Projection).dot(&ModelView).dot(&v_mat);
+
+            world_coords[j] = v;
+            screen_coords[j] = Vec3f {
+                x: v_mat[[0, 0]],
+                y: v_mat[[1, 1]],
+                z: v_mat[[2, 2]],
+            };
+            /*
+            screen_coords[j]= world_to_screen(v, width, height);
+            */
+            println!("screen coords: {} {}", screen_coords[j].x, screen_coords[j].y);
             tex_coords[j] = &model.textures[face.textures[j]-1];
             normals[j] = &model.normals[face.normals[j]-1];
         }

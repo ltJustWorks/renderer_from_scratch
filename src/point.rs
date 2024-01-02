@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::ops::Index;
+use ndarray::{Array2};
 
 pub struct Point2D {
     pub x: i32,
@@ -44,7 +45,7 @@ pub fn barycentric(pts: &[Vec3f; 3], p: &Vec3f) -> Vec3f {
         y: (pts[1].x - pts[0].x) as f32,
         z: (pts[0].x - p.x) as f32,
     } 
-    .cross_product(Vec3f {
+    .cross_product(&Vec3f {
         x: (pts[2].y - pts[0].y) as f32,
         y: (pts[1].y - pts[0].y) as f32,
         z: (pts[0].y - p.y) as f32,
@@ -70,7 +71,7 @@ impl Vec3f {
         }
     }
 
-    pub fn cross_product(&self, other: Self) -> Self {
+    pub fn cross_product(&self, other: &Self) -> Self {
         Self {
             x: self.y * other.z - self.z * other.y,
             y: self.z * other.x - self.x * other.z,
@@ -96,4 +97,32 @@ impl Vec3f {
             }
         } else {Self{x:self.x,y:self.y,z:self.z}}
     }
+}
+
+pub fn lookat(eye: &Vec3f, center: &Vec3f, up: &Vec3f) -> Array2<f32> {
+    let z = (eye.subtract(&center)).normalize();
+    let x = (up.cross_product(&z)).normalize();
+    let y = (&z.cross_product(&x)).normalize();
+
+    let mut Minv = Array2::eye(4);
+    let Tr = Array2::eye(4);
+
+    for i in 0..3 {
+        Minv[[0, i]] = x[i] as f32;
+    }
+
+    Minv.dot(&Tr)
+}
+
+pub fn viewport(x: i32, y: i32, w: i32, h: i32, depth: i32) -> Array2<f32> {
+    let mut m = Array2::eye(4);
+    m[[0,3]] = (x as f32) + (w as f32)/2.0;
+    m[[1,3]] = (y as f32) + (h as f32)/2.0;
+    m[[0,3]] = (depth as f32)/2.0;
+
+    m[[0,0]] = (w as f32)/2.0;
+    m[[1,1]] = (h as f32)/2.0;
+    m[[2,2]] = (depth as f32)/2.0;
+
+    m
 }
