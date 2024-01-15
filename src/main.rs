@@ -1,5 +1,5 @@
 use minifb::{Window, WindowOptions};
-use ndarray::{array, Array, arr1, Array2};
+use ndarray::{array, Array, arr1, Array2, Array1};
 use point::{Point2D, Vec3f, Vec2f, lookat, viewport};
 use tgaimage::{TGAImage, TGAColor, TGAColorRGBA};
 use rand::Rng;
@@ -62,7 +62,9 @@ fn draw_model(width: usize, height: usize, depth: usize, image: &mut TGAImage) {
     let mut Projection = Array2::eye(4);
     Projection[[3,2]] = -1.0 / (eye.subtract(&center)).length();
     let ViewPort = viewport((width/8) as i32, (height/8) as i32, (width*3/4) as i32, (height*3/4) as i32, depth as i32);
-    println!("{}", ViewPort);
+    println!("ModelView: {}", ModelView);
+    println!("ViewPort: {}", ViewPort);
+    println!("Projection: {}", Projection);
 
     for i in 0..model.faces.len() {
         let face = &model.faces[i];
@@ -80,24 +82,22 @@ fn draw_model(width: usize, height: usize, depth: usize, image: &mut TGAImage) {
 
         for j in 0..3 {
             let v = &model.vertices[face.vertices[j]-1];
-
-            //let mut v_mat = Array::from_diag(&arr1(&[v.x, v.y, v.z]));
-            let mut v_mat = Array2::eye(4);
-            v_mat[[0, 0]] = v.x;
-            v_mat[[1, 1]] = v.y;
-            v_mat[[2, 2]] = v.z;
-            v_mat = ViewPort.dot(&Projection).dot(&ModelView).dot(&v_mat);
-
             world_coords[j] = v;
+
+            let v: Array1<f32> = arr1(&[v.x, v.y, v.z, 1.0]);
+            let v_homogenous = ViewPort.dot(&Projection).dot(&ModelView).dot(&v);
+
             screen_coords[j] = Vec3f {
-                x: v_mat[[0, 0]],
-                y: v_mat[[1, 1]],
-                z: v_mat[[2, 2]],
+                x: v_homogenous[0] / v_homogenous[3],
+                y: v_homogenous[1] / v_homogenous[3],
+                z: v_homogenous[2] / v_homogenous[3],
             };
+
+            //println!("v_mat: {}", v_mat);
+            //println!("screen coord 1: {} {} {}", screen_coords[0][0], screen_coords[0][1], screen_coords[0][2]);
             /*
             screen_coords[j]= world_to_screen(v, width, height);
             */
-            println!("screen coords: {} {}", screen_coords[j].x, screen_coords[j].y);
             tex_coords[j] = &model.textures[face.textures[j]-1];
             normals[j] = &model.normals[face.normals[j]-1];
         }

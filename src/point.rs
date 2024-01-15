@@ -105,10 +105,13 @@ pub fn lookat(eye: &Vec3f, center: &Vec3f, up: &Vec3f) -> Array2<f32> {
     let y = (&z.cross_product(&x)).normalize();
 
     let mut Minv = Array2::eye(4);
-    let Tr = Array2::eye(4);
+    let mut Tr = Array2::eye(4);
 
     for i in 0..3 {
         Minv[[0, i]] = x[i] as f32;
+        Minv[[1, i]] = y[i] as f32;
+        Minv[[2, i]] = z[i] as f32;
+        Tr[[i, 3]] = -eye[i];
     }
 
     Minv.dot(&Tr)
@@ -118,7 +121,7 @@ pub fn viewport(x: i32, y: i32, w: i32, h: i32, depth: i32) -> Array2<f32> {
     let mut m = Array2::eye(4);
     m[[0,3]] = (x as f32) + (w as f32)/2.0;
     m[[1,3]] = (y as f32) + (h as f32)/2.0;
-    m[[0,3]] = (depth as f32)/2.0;
+    m[[2,3]] = (depth as f32)/2.0;
 
     m[[0,0]] = (w as f32)/2.0;
     m[[1,1]] = (h as f32)/2.0;
